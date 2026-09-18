@@ -103,4 +103,15 @@ contract VaultTest is Test {
         vm.expectRevert(abi.encodeWithSelector(PriceConverter.PriceConverter__InvalidPrice.selector));
         vault.deposit{value: 1 ether}();
     }
+
+    function test_EmitsDepositMadeEvent() public {
+        uint256 depositAmount = 1 ether;
+
+        vm.expectEmit(true, true, false, true);
+
+        emit Vault.DepositMade(alice, depositAmount, depositAmount);
+
+        vm.prank(alice);
+        vault.deposit{value: depositAmount}();
+    }
 }
