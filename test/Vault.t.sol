@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {Vault} from "../src/Vault.sol";
 import {MockV3Aggregator} from "./mocks/MockV3Aggregator.sol";
+import {PriceConverter} from "../src/PriceConverter.sol";
 
 contract VaultTest is Test {
     Vault public vault;
@@ -85,5 +86,21 @@ contract VaultTest is Test {
         assertEq(vault.getBalanceOf(alice), 0);
         assertEq(alice.balance, INITIAL_BALANCE);
         vm.stopPrank();
+    }
+
+    function test_RevertWhen_OraclePriceIsStale() public {
+        vm.warp(block.timestamp + 3 hours + 1 seconds);
+
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSelector(PriceConverter.PriceConverter__StalePrice.selector));
+        vault.deposit{value: 1 ether}();
+    }
+
+    function test_RevertWhen_OraclePriceIsInvalid() public {
+        mockPriceFeed.updateAnswer(0);
+
+        vm.prank(alice);
+        vm.expectRevert(abi.encodeWithSelector(PriceConverter.PriceConverter__InvalidPrice.selector));
+        vault.deposit{value: 1 ether}();
     }
 }
